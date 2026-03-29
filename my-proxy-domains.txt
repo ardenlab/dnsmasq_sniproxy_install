@@ -156,6 +156,7 @@ cdn.usefathom.com
 cds1.clubdam.com
 channel4.com
 channel5.com
+chat.com
 chatgpt.com
 chocotv.com.tw
 cinemax.com
@@ -168,6 +169,7 @@ clubdam.com
 cognito-identity.us-east-1.amazonaws.com
 colorfulpalette.org
 content-ause1-ur-discovery1.uplynk.com
+crixet.com
 content-jiovoot.voot.com
 content.jwplatform.com
 control.kochava.com
@@ -241,6 +243,7 @@ dmqdd6hw24ucf.cloudfront.net
 docplay.com
 dogatch.jp
 doubleclick.net
+deepmind.com
 ds-linear-abematv.akamaized.net
 ds-vod-abematv.akamaized.net
 dssott.com
@@ -277,6 +280,8 @@ exp-tas.com
 f1prodlive.akamaized.net
 failoverstarhub.akamaized.net
 fbcdn.net
+featureassets.org
+featuregates.org
 ff1be285-madman-com-au.akamaized.net
 fls-na.amazon.com
 formula1.com
@@ -300,6 +305,7 @@ gamer2-cds.cdn.hinet.net
 gemini.google.com
 generativelanguage.googleapis.com
 genspark.ai
+ggpht.com
 geo-id-media-001-vidio-com.akamaized.net
 geolocation.onetrust.com
 getblueshift.com
@@ -309,9 +315,14 @@ global.ssl.fastly.net
 glxplay.io
 go-mpulse.net
 google.com
+google-analytics.com
 googleapis.com
+googletagmanager.com
+googleusercontent.com
+googlevideo.com
 gorin.jp
 grpc.biliapi.net
+gstatic.com
 gvt1.com
 gyao.yahoo.co.jp
 hamivideo.hinet.net
@@ -410,6 +421,7 @@ linetv.tw
 link.theplatform.com
 lion-nba-msl.akamaized.net
 litix.io
+livekit.cloud
 litv.tv
 live01-stan.akamaized.net
 live02-stan.akamaized.net
@@ -495,6 +507,7 @@ oaiusercontent.com
 ofiii.com
 ols-ww100-cp.akamaized.net
 openai.com
+openaimerge.com
 openrouter.ai
 optus.com.au
 optusdigital.com
@@ -567,7 +580,10 @@ scdn.co
 screens-lab.jp
 scvm1sc0-ssm.anycast.nagra.com
 sdk.iad-03.braze.com
+sendgrid.net
 sentry.io
+statsig.com
+statsigapi.net
 setantasports.com
 seven.demdex.net
 shahid.net
@@ -690,7 +706,9 @@ watchespn.com
 watchnba.cdnfastly.endeavorstreaming.net
 wavve.com
 webantenna.info
+withgoogle.com
 workos.com
+workoscdn.com
 worldflipper.jp
 wowow.co.jp
 www.bilibili.com
@@ -704,6 +722,7 @@ youku.com
 yourtv.com.au
 youtube.com
 youtubei.googleapis.com
+ytimg.com
 zahs.tv
 zdf.de
 zee5.com
