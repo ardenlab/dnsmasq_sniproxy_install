@@ -66,18 +66,23 @@ show_help() {
     echo "用法: $0 [选项]"
     echo
     echo "选项："
-    echo "  init       - 初始化UFW防火墙（首次使用）"
-    echo "  add IP     - 添加IP访问53/80/443端口的权限"
-    echo "  remove IP  - 移除IP的访问权限"
-    echo "  list       - 显示当前防火墙规则"
-    echo "  status     - 显示UFW状态"
-    echo "  backup     - 备份当前规则"
-    echo "  help       - 显示此帮助信息"
+    echo "  init         - 初始化UFW防火墙（首次使用）"
+    echo "  add IP       - 添加IP访问53/80/443端口的权限"
+    echo "  remove IP    - 移除IP的访问权限"
+    echo "  open PORT    - 开放端口（允许任意IP连接）"
+    echo "  close PORT   - 关闭已开放的端口"
+    echo "  list         - 显示当前防火墙规则"
+    echo "  status       - 显示UFW状态"
+    echo "  backup       - 备份当前规则"
+    echo "  help         - 显示此帮助信息"
     echo
     echo "示例："
     echo "  $0 init                    # 首次初始化"
     echo "  $0 add 192.168.1.100      # 添加IP权限"
     echo "  $0 remove 192.168.1.100   # 移除IP权限"
+    echo "  $0 open 8080              # 开放8080端口"
+    echo "  $0 open 8080/udp          # 开放8080 UDP端口"
+    echo "  $0 close 8080             # 关闭8080端口"
     echo "  $0 list                   # 查看规则"
 }
 
@@ -174,6 +179,53 @@ add_ip_rule() {
     log_success "已添加HTTPS端口(443)访问规则"
     
     log_success "已为 $ip 添加所有访问规则"
+}
+
+# 验证端口号格式（支持 port 或 port/proto）
+validate_port() {
+    local port_input=$1
+    local port_num="${port_input%%/*}"
+    local proto="${port_input#*/}"
+
+    # Extract port number (strip protocol if present)
+    if [[ "$port_input" == */* ]]; then
+        if [[ "$proto" != "tcp" && "$proto" != "udp" ]]; then
+            log_error "无效的协议：$proto（仅支持 tcp 或 udp）"
+            return 1
+        fi
+    fi
+
+    if [[ ! "$port_num" =~ ^[0-9]+$ ]] || [[ "$port_num" -lt 1 ]] || [[ "$port_num" -gt 65535 ]]; then
+        log_error "无效的端口号：$port_num（范围：1-65535）"
+        return 1
+    fi
+
+    return 0
+}
+
+# 开放端口（允许任意IP连接）
+open_port() {
+    local port=$1
+
+    if ! validate_port "$port"; then
+        return 1
+    fi
+
+    log_info "开放端口 $port（允许任意IP连接）..."
+    ufw allow $port
+    log_success "端口 $port 已开放"
+}
+
+# 关闭已开放的端口
+close_port() {
+    local port=$1
+
+    if ! validate_port "$port"; then
+        return 1
+    fi
+
+    log_info "关闭端口 $port..."
+    ufw delete allow $port 2>/dev/null && log_success "端口 $port 已关闭" || log_warning "端口 $port 的开放规则不存在或已删除"
 }
 
 # 移除IP访问规则
@@ -305,16 +357,18 @@ interactive_menu() {
         echo
         echo -e "${GREEN}========== UFW快速管理菜单 ==========${NC}"
         echo "1. 初始化UFW防火墙"
-        echo "2. 添加IP访问规则"
+        echo "2. 添加IP访问规则（限定IP访问53/80/443）"
         echo "3. 移除IP访问规则"
-        echo "4. 显示当前规则"
-        echo "5. 显示UFW状态"
-        echo "6. 备份当前规则"
-        echo "7. 退出"
+        echo "4. 开放端口（允许任意IP连接）"
+        echo "5. 关闭已开放的端口"
+        echo "6. 显示当前规则"
+        echo "7. 显示UFW状态"
+        echo "8. 备份当前规则"
+        echo "9. 退出"
         echo -e "${GREEN}====================================${NC}"
-        
-        read -p "请选择操作 (1-7): " choice
-        
+
+        read -p "请选择操作 (1-9): " choice
+
         case $choice in
             1)
                 init_ufw
@@ -328,20 +382,30 @@ interactive_menu() {
                 remove_ip_rule "$ip"
                 ;;
             4)
-                show_rules
+                echo -e "${YELLOW}支持格式：端口号(如 8080)、端口/协议(如 8080/tcp、53/udp)${NC}"
+                read -p "请输入要开放的端口: " port
+                open_port "$port"
                 ;;
             5)
-                show_status
+                echo -e "${YELLOW}支持格式：端口号(如 8080)、端口/协议(如 8080/tcp、53/udp)${NC}"
+                read -p "请输入要关闭的端口: " port
+                close_port "$port"
                 ;;
             6)
-                backup_rules
+                show_rules
                 ;;
             7)
+                show_status
+                ;;
+            8)
+                backup_rules
+                ;;
+            9)
                 log_info "退出程序"
                 exit 0
                 ;;
             *)
-                log_warning "无效选择，请输入1-7"
+                log_warning "无效选择，请输入1-9"
                 ;;
         esac
     done
@@ -372,6 +436,24 @@ main() {
                 exit 1
             fi
             remove_ip_rule "$2"
+            ;;
+        open)
+            install_ufw_if_needed
+            if [[ -z "${2:-}" ]]; then
+                log_error "请提供端口号"
+                echo "用法: $0 open <端口号>  (例如: 8080, 8080/tcp, 53/udp)"
+                exit 1
+            fi
+            open_port "$2"
+            ;;
+        close)
+            install_ufw_if_needed
+            if [[ -z "${2:-}" ]]; then
+                log_error "请提供端口号"
+                echo "用法: $0 close <端口号>  (例如: 8080, 8080/tcp, 53/udp)"
+                exit 1
+            fi
+            close_port "$2"
             ;;
         list)
             install_ufw_if_needed
