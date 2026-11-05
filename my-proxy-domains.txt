@@ -560,10 +560,17 @@ radionikkei.jp
 rakuten.co.jp
 rakuten.tv
 redd.it
+reddit.app.link
 reddit.com
+reddit.map.fastly.net
+redditblog.com
+reddithelp.com
+redditinc.com
 redditmail.com
 redditmedia.com
+redditspace.com
 redditstatic.com
+redditstatus.com
 reddituploads.com
 reddituploads.com.cdn-cf.behance.net
 reddituploads.com.cdn-cf.dropbox.com

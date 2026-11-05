@@ -57,6 +57,53 @@ wget --no-check-certificate -O dnsmasq_sniproxy.sh https://raw.githubusercontent
 
 为了防止滥用，建议不要公开 IP 地址，并使用防火墙进行适当的访问限制。
 
+### 为已部署服务器添加 Reddit
+
+本项目推荐入口 `my_dnsmasq_sniproxy.sh` 使用 `my-proxy-domains.txt`，该文件由 `tmp/` 中的源清单经 `bash extract_domains.sh` 生成。Reddit 的源清单位于 `tmp/custom_domain.txt`，已包含下面这些域名；仅修改仓库清单不会更新服务器现有配置。
+
+| 域名 | 覆盖范围 |
+| --- | --- |
+| `reddit.com` | 网站及其子域名，如 `www`、`old`、`oauth`、`gateway` |
+| `redd.it` | 图片、视频、预览和短链接，如 `i.redd.it`、`v.redd.it` |
+| `redditmedia.com`、`redditstatic.com` | 媒体及静态资源 |
+| `redditspace.com` | 聊天相关服务 |
+| `reddit.app.link`、`redditmail.com`、`reddituploads.com` | App 链接、邮件链接和上传相关域名 |
+| `redditblog.com`、`reddithelp.com`、`redditinc.com`、`redditstatus.com` | 博客、帮助、公司和状态页面 |
+| `reddit.map.fastly.net` | Reddit 的 CDN 域名，包含其子域名 |
+| `reddituploads.com.cdn-cf.behance.net`、`reddituploads.com.cdn-cf.dropbox.com` | 保留原清单中的兼容规则 |
+
+域名范围核对自 [v2fly 的 Reddit 清单](https://github.com/v2fly/domain-list-community/blob/master/data/reddit) 和 [blackmatrix7 的 Reddit 清单](https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Clash/Reddit/Reddit.list)。这些是社区维护的分流规则，兼容规则不代表当前页面一定会请求这些域名。
+
+将本地 `add_proxy_domains.sh` 复制到已部署的 Linux 服务器，或在服务器的项目目录中执行。把 `203.0.113.10` 换成 **SNI 转发服务器的公网 IPv4**：
+
+```bash
+# 先预览将要生成的规则
+bash add_proxy_domains.sh --dry-run 203.0.113.10
+
+# 不传域名时，默认添加上表中的 15 个 Reddit 域名
+sudo bash add_proxy_domains.sh 203.0.113.10
+
+# 以后也可以指定其他域名，根域名会同时覆盖子域名
+sudo bash add_proxy_domains.sh 203.0.113.10 example.com example.net
+```
+
+脚本针对本项目默认的同机部署，同步更新 `/etc/dnsmasq.d/custom_netflix.conf` 和 `/etc/sniproxy.conf`，保留已有规则并自动备份、检查 DNS 配置、重启两个服务；失败时恢复备份，重复执行不会重复添加相同规则。SNI 新规则使用 `(^|\.)域名$`，同时匹配域名本身和子域名，并识别安装器生成的旧格式。DNS 与 SNI 分别部署在两台机器时，需在各自服务器上更新对应配置。
+
+脚本还为所选域名添加 `local=/域名/`，防止 Dnsmasq 2.86+ 将 AAAA、HTTPS 等查询继续发往上游，使客户端绕过 IPv4 代理。该行为参考 [Dnsmasq 官方手册的 `--address` 说明](https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html)。备份使用隐藏文件名，避免被 `conf-dir` 自动加载。
+
+从使用该 DNS 的客户端检查解析，下面的 `203.0.113.20` 应替换为 **Dnsmasq 服务器 IP**：
+
+```bash
+dig @203.0.113.20 www.reddit.com A +short
+dig @203.0.113.20 i.redd.it A +short
+dig @203.0.113.20 v.redd.it A +short
+dig @203.0.113.20 matrix.redditspace.com A +short
+```
+
+上述结果应指向 SNI 服务器 IP。浏览器需使用这台 Dnsmasq 解析；若浏览器自带的安全 DNS 绕过了它，分流规则不会生效。HTTPS 转发可用 `curl --http1.1 -I --resolve www.reddit.com:443:203.0.113.10 https://www.reddit.com/` 测试，它保留原域名用于 SNI 和证书校验；HTTP 状态还取决于 Reddit 对出口 IP 的访问策略。
+
+安装器仍从 GitHub 下载清单，因此尚未推送的本地修改不会被 README 中的在线安装命令获取；现有服务器直接使用上述增量脚本即可。
+
 ### 调试排错：
 - 确认 sniproxy 运行状态
 
